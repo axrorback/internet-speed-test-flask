@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Internet Speed Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f7f9fc;
+    }
+    .card {
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    .result-icon {
+      font-size: 2rem;
+      color: #0d6efd;
+    }
+    .counter {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .progress {
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h1 class="fw-bold text-primary">📶 Real-Time Internet Speed Test</h1>
+    <p class="text-muted">Measure your Download, Upload, Ping with duration</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card p-4 text-center">
+        <div id="progress-area">
+          <p class="counter">⏱️ Test Duration: <span id="timer">0</span> sec</p>
+          <div class="progress mb-3">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+
+        <div id="results" class="mb-3">
+          <p><i class="bi bi-arrow-down-circle result-icon"></i> Download: <span id="download">--</span> Mbps</p>
+          <p><i class="bi bi-arrow-up-circle result-icon"></i> Upload: <span id="upload">--</span> Mbps</p>
+          <p><i class="bi bi-speedometer result-icon"></i> Ping: <span id="ping">--</span> ms</p>
+          <p><i class="bi bi-hourglass-split result-icon"></i> Total Time: <span id="duration">--</span> sec</p>
+        </div>
+
+        <button id="startBtn" class="btn btn-success px-4">
+          <i class="bi bi-play-circle"></i> Start Test
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const startBtn = document.getElementById("startBtn");
+  const downloadEl = document.getElementById("download");
+  const uploadEl = document.getElementById("upload");
+  const pingEl = document.getElementById("ping");
+  const durationEl = document.getElementById("duration");
+  const timerEl = document.getElementById("timer");
+  const progressBar = document.getElementById("progressBar");
+
+  let timer = 0;
+  let timerInterval = null;
+  let progressInterval = null;
+
+  function resetUI() {
+    downloadEl.textContent = '--';
+    uploadEl.textContent = '--';
+    pingEl.textContent = '--';
+    durationEl.textContent = '--';
+    timerEl.textContent = '0';
+    progressBar.style.width = '0%';
+    progressBar.textContent = '0%';
+  }
+
+  function startTimer() {
+    timer = 0;
+    timerInterval = setInterval(() => {
+      timer++;
+      timerEl.textContent = timer;
+    }, 1000);
+  }
+
+  function simulateProgress() {
+    let progress = 0;
+    progressInterval = setInterval(() => {
+      if (progress < 98) {
+        progress += Math.random() * 3;
+        progressBar.style.width = progress.toFixed(0) + '%';
+        progressBar.textContent = progress.toFixed(0) + '%';
+      }
+    }, 500);
+  }
+
+  function stopTimers() {
+    clearInterval(timerInterval);
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+    progressBar.textContent = '100%';
+  }
+
+  startBtn.addEventListener("click", () => {
+    resetUI();
+    startBtn.disabled = true;
+    startTimer();
+    simulateProgress();
+
+    fetch("/run_test")
+      .then(response => response.json())
+      .then(data => {
+        stopTimers();
+        downloadEl.textContent = data.download;
+        uploadEl.textContent = data.upload;
+        pingEl.textContent = data.ping;
+        durationEl.textContent = data.duration;
+        startBtn.disabled = false;
+      })
+      .catch(err => {
+        alert("❌ Error during test. Try again.");
+        startBtn.disabled = false;
+        stopTimers();
+      });
+  });
+</script>
+</body>
+</html>
